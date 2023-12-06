@@ -1,6 +1,7 @@
 #include "SerialPort.h"
 #include <stdint.h>
 #include <iostream>
+#include <queue>
 
 #define VERIFY
 
@@ -9,15 +10,23 @@
 #define CHARATRIB 0b01110000
 
 
+
 char* address = "\\\\.\\COM5";
 
 #define DATA_MASK 0x0001
 
 #define size 4
+  struct clanekHada
+  {
+    int x,y;
+    
+  };
   
-int setchar(SerialPort *MySerial, char c, char atr, int x, int y){
+
+
+int setchar(SerialPort *MySerial, uint8_t c, char atr, int x, int y){
     #define NUMCHARSET 8
-    char data[NUMCHARSET];
+    uint8_t data[NUMCHARSET];
     data[0] = 'p';
     data[1] = x;
     data[2] = y;
@@ -27,7 +36,7 @@ int setchar(SerialPort *MySerial, char c, char atr, int x, int y){
     data[6] = atr;
     data[7] = 'l';
     
-    int TxBytes = MySerial->writeSerialPort(data, NUMCHARSET);
+    int TxBytes = MySerial->writeSerialPort((char*) data, NUMCHARSET);
      
     return TxBytes;
     
@@ -126,8 +135,8 @@ int main(void){
     char Rx[size] = {'\0'};
 
     
-
-    setchar(&MySerial, '0', CHARATRIB, 5,5);
+/*
+    //setchar(&MySerial, '0', CHARATRIB, 5,5);
 
     int r;
     char ret[4];
@@ -145,7 +154,23 @@ int main(void){
             }
             #endif
         } while (ready_bytes != 4);
-    r = MySerial.readSerialPort(ret, ready_bytes);
+    r = MySerial.readSerialPort(ret, ready_bytes);*/
+
+    std::queue<clanekHada> had;
+    int direction = 0;                                                  // 0 -> left, 1-> right, 2 -> up, 3 -> down
+    for (int i = 0; i < 4; ++i)
+    {
+            clanekHada a;
+            a.x = MAX_X/2+2-i;
+            a.y = MAX_Y/2;
+            had.push(a);
+            setchar(&MySerial, 218,0b01110000,had.back().x,had.back().y);   //atribut black background, white char
+        
+    }
+    
+
+
+
 /*
     int written_bytes = 0;
     #ifndef VERIFY
