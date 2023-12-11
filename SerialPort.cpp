@@ -48,7 +48,7 @@ SerialPort::SerialPort(char *portName)
 		}
 		else {
 			//dcbSerialParameters.BaudRate = 921600;
-			dcbSerialParameters.BaudRate = CBR_115200;
+			dcbSerialParameters.BaudRate = CBR_57600;
 			dcbSerialParameters.ByteSize = 8;
 			dcbSerialParameters.StopBits = ONESTOPBIT;
 			dcbSerialParameters.Parity = NOPARITY;
