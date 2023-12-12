@@ -54,7 +54,7 @@ SerialPort::SerialPort(char *portName)
 			dcbSerialParameters.Parity = NOPARITY;
 			dcbSerialParameters.fDtrControl = DTR_CONTROL_ENABLE;
 
-			if (!SetCommState(handler, &dcbSerialParameters))
+			if (!SetCommState(handler, &dcbSerialParameters) || !SetCommMask(handler, DATA_MASK))
 			{
 				printf("ALERT: could not set Serial port parameters\n");
 			}
@@ -79,20 +79,27 @@ SerialPort::~SerialPort()
 int SerialPort::readSerialPort(char *buffer, unsigned int buf_size)
 {
 	DWORD bytesRead=0;
-	unsigned int toRead = 0;
+
+	int ready_bytes = 0;
+	DWORD ret_mask = 0;
+	do{
+
+		WaitCommEvent(this->handler, &ret_mask, NULL);
+		if (ret_mask == DATA_MASK){
+			ClearCommError(this->handler, &this->errors, &this->status);
+			ready_bytes = this->status.cbInQue;
+		}
+		else{
+			std::cout << "ERROR in reading!\n";
+		}
+	} while (ready_bytes < buf_size);
+
 
 	ClearCommError(this->handler, &this->errors, &this->status);
 
-	if (this->status.cbInQue > 0) {
-		if (this->status.cbInQue > buf_size) {
-			toRead = buf_size;
-		}
-		else toRead = this->status.cbInQue;
-	}
-
 	memset(buffer, 0, buf_size);
 
-	if (ReadFile(this->handler, buffer, toRead, &bytesRead, NULL)) return bytesRead;
+	if (ReadFile(this->handler, buffer, buf_size, &bytesRead, NULL)) return bytesRead;
 	
 	return 0;
 }
@@ -101,6 +108,34 @@ int SerialPort::writeSerialPort(char *buffer, unsigned int buf_size)
 {
 	DWORD bytesSend;
 
+
+	if (!WriteFile(this->handler, (void*)buffer, buf_size, &bytesSend, NULL)) {
+		ClearCommError(this->handler, &this->errors, &this->status);
+		return 0;
+	}
+	else return bytesSend;
+}
+
+int SerialPort::writeSerialPort(uint32_t value)
+{
+	DWORD bytesSend;
+	int buf_size = sizeof(uint32_t);
+	char *buffer[buf_size] = {0};
+	memcpy(buffer, (uint8_t*)&value, buf_size);
+
+	if (!WriteFile(this->handler, (void*)buffer, buf_size, &bytesSend, NULL)) {
+		ClearCommError(this->handler, &this->errors, &this->status);
+		return 0;
+	}
+	else return bytesSend;
+}
+
+int SerialPort::writeSerialPort(uint64_t value)
+{
+	DWORD bytesSend;
+	int buf_size = sizeof(uint64_t);
+	char *buffer[buf_size] = {0};
+	memcpy(buffer, (uint8_t*)&value, buf_size);
 
 	if (!WriteFile(this->handler, (void*)buffer, buf_size, &bytesSend, NULL)) {
 		ClearCommError(this->handler, &this->errors, &this->status);

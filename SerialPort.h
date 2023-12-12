@@ -11,11 +11,14 @@
 
 #define ARDUINO_WAIT_TIME 2000
 #define MAX_DATA_LENGTH 255
+#define DATA_MASK 0x0001
 
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fileapi.h>
+#include <stdint.h>
+#include <iostream>
 
 class SerialPort
 {
@@ -32,8 +35,14 @@ public:
 	int getTxNum() {ClearCommError(this->handler, &this->errors, &this->status); return this->status.cbOutQue;}
 	int getRxNum() {ClearCommError(this->handler, &this->errors, &this->status); return this->status.cbInQue;}
 
+	//Reads specified number of bytes to buffer, waits until all bytes arrive
 	int readSerialPort(char *buffer, unsigned int buf_size);
+
+	//Write function for buffer, one packet and 2 packets
 	int writeSerialPort(char *buffer, unsigned int buf_size);
+	int writeSerialPort(uint32_t value);
+	int writeSerialPort(uint64_t value);
+
 	bool isConnected();
 	void closeSerial();
 };
