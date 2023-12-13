@@ -27,7 +27,7 @@
 					[
 						0
 					],
-					"name" : "Serial",
+					"name" : "SerialSnake",
 					"targetIndexes" : 
 					[
 						0
@@ -38,9 +38,9 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "Serial::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-Serial-Debug-a56155c606ba134a9880.json",
-					"name" : "Serial",
+					"id" : "SerialSnake::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SerialSnake-Debug-6484d5beb60402e9a47d.json",
+					"name" : "SerialSnake",
 					"projectIndex" : 0
 				}
 			]

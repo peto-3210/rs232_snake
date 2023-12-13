@@ -116,24 +116,48 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named Serial
+# Target rules for targets named SerialSnake
 
 # Build rule for target.
-Serial: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 Serial
-.PHONY : Serial
+SerialSnake: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 SerialSnake
+.PHONY : SerialSnake
 
 # fast build rule for target.
-Serial/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/build
-.PHONY : Serial/fast
+SerialSnake/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/build
+.PHONY : SerialSnake/fast
+
+Game.obj: Game.cpp.obj
+.PHONY : Game.obj
+
+# target to build an object file
+Game.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/Game.cpp.obj
+.PHONY : Game.cpp.obj
+
+Game.i: Game.cpp.i
+.PHONY : Game.i
+
+# target to preprocess a source file
+Game.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/Game.cpp.i
+.PHONY : Game.cpp.i
+
+Game.s: Game.cpp.s
+.PHONY : Game.s
+
+# target to generate assembly for a file
+Game.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/Game.cpp.s
+.PHONY : Game.cpp.s
 
 SerialPort.obj: SerialPort.cpp.obj
 .PHONY : SerialPort.obj
 
 # target to build an object file
 SerialPort.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/SerialPort.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/SerialPort.cpp.obj
 .PHONY : SerialPort.cpp.obj
 
 SerialPort.i: SerialPort.cpp.i
@@ -141,7 +165,7 @@ SerialPort.i: SerialPort.cpp.i
 
 # target to preprocess a source file
 SerialPort.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/SerialPort.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/SerialPort.cpp.i
 .PHONY : SerialPort.cpp.i
 
 SerialPort.s: SerialPort.cpp.s
@@ -149,7 +173,7 @@ SerialPort.s: SerialPort.cpp.s
 
 # target to generate assembly for a file
 SerialPort.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/SerialPort.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/SerialPort.cpp.s
 .PHONY : SerialPort.cpp.s
 
 Snake.obj: Snake.cpp.obj
@@ -157,7 +181,7 @@ Snake.obj: Snake.cpp.obj
 
 # target to build an object file
 Snake.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/Snake.cpp.obj
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/Snake.cpp.obj
 .PHONY : Snake.cpp.obj
 
 Snake.i: Snake.cpp.i
@@ -165,7 +189,7 @@ Snake.i: Snake.cpp.i
 
 # target to preprocess a source file
 Snake.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/Snake.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/Snake.cpp.i
 .PHONY : Snake.cpp.i
 
 Snake.s: Snake.cpp.s
@@ -173,7 +197,7 @@ Snake.s: Snake.cpp.s
 
 # target to generate assembly for a file
 Snake.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Serial.dir\build.make CMakeFiles/Serial.dir/Snake.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\SerialSnake.dir\build.make CMakeFiles/SerialSnake.dir/Snake.cpp.s
 .PHONY : Snake.cpp.s
 
 # Help Target
@@ -184,7 +208,10 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
-	@echo ... Serial
+	@echo ... SerialSnake
+	@echo ... Game.obj
+	@echo ... Game.i
+	@echo ... Game.s
 	@echo ... SerialPort.obj
 	@echo ... SerialPort.i
 	@echo ... SerialPort.s

@@ -43,9 +43,9 @@
 #include "SerialPort.h"
 #include <unordered_set>
 #include <deque>
+#include <string>
 
 
-char* address = "\\\\.\\COM5";
 
 //Structure representing one RS232 packet
 union serialPacket{
@@ -58,6 +58,17 @@ union serialPacket{
 
     serialPacket(uint32_t packet){
         rawPacket = packet;
+    }
+
+    serialPacket(){
+        memset(this, 0, sizeof(serialPacket));
+    }
+
+    std::string packet_to_string(){
+        return (char)genericPacket.commandName + " " + 
+            std::to_string(genericPacket.commandPar1) + " " +
+            std::to_string(genericPacket.commandPar2) + " " +
+            (char)genericPacket.crc;
     }
 
     struct {
@@ -100,9 +111,15 @@ union serialPacket{
 
 //Concatenated moveCursor and writeChar packets
 union writePosPacket{
-    writePosPacket(uint8_t x, uint8_t y, uint8_t ch, uint8_t attrib){
-        position = serialPacket(SET_POS, x, y);
-        character = serialPacket(WRITE_CHAR, ch, attrib);
+    writePosPacket(uint8_t x_cor, uint8_t y_cor, uint8_t ch, uint8_t attrib){
+        set_pos = SET_POS;
+        x = x_cor;
+        y = y_cor;
+        crc1 = MY_CRC;
+        write_char = WRITE_CHAR;
+        character = ch;
+        attribute = attrib;
+        crc2 = MY_CRC;
     }
 
     writePosPacket(uint64_t packet){
@@ -110,8 +127,14 @@ union writePosPacket{
     }
 
     struct{
-        serialPacket position;
-        serialPacket character;
+        uint8_t set_pos;
+        uint8_t x;
+        uint8_t y;
+        uint8_t crc1;
+        uint8_t write_char;
+        uint8_t character;
+        uint8_t attribute;
+        uint8_t crc2;
     };
     uint64_t rawPacket;
 };
@@ -120,6 +143,9 @@ union writePosPacket{
 union responsePacket{
     responsePacket(uint16_t packet){
         rawPacket = packet;
+    }
+    std::string packet_to_string(){
+        return (char)response + " " + (char)command;
     }
     struct {
         uint8_t response;
@@ -160,10 +186,11 @@ class GameBoard{
         //Board
         GameBoard(char* conn);
         ~GameBoard();
+        bool isRunning(){return this->running;};
 
         //Snake
         bool setMoveDir(uint8_t dir);
-        int moveHead();
+        bool moveHead();
 
         //Treats
         bool generateTreat();
@@ -171,6 +198,7 @@ class GameBoard{
     private:
         //Board
         SerialPort Serial;
+        bool running;
 
         bool sendSerial(serialPacket& packet);
         bool sendSerial(writePosPacket& drawPacket);

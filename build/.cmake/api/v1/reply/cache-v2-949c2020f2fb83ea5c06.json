@@ -891,7 +891,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "Serial"
+			"value" : "SerialSnake"
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1284,6 +1284,42 @@
 			],
 			"type" : "BOOL",
 			"value" : "FALSE"
+		},
+		{
+			"name" : "SerialSnake_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake/build"
+		},
+		{
+			"name" : "SerialSnake_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "SerialSnake_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake"
 		},
 		{
 			"name" : "Serial_BINARY_DIR",

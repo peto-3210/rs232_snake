@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/Serial.dir/Game.cpp.obj"
+  "CMakeFiles/Serial.dir/Game.cpp.obj.d"
   "CMakeFiles/Serial.dir/SerialPort.cpp.obj"
   "CMakeFiles/Serial.dir/SerialPort.cpp.obj.d"
   "CMakeFiles/Serial.dir/Snake.cpp.obj"

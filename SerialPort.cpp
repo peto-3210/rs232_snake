@@ -39,6 +39,7 @@ SerialPort::SerialPort(char *portName)
 		{
 			printf("ERROR!!!");
 		}
+		return;
 	}
 	else {
 		DCB dcbSerialParameters = { 0 };
@@ -66,6 +67,8 @@ SerialPort::SerialPort(char *portName)
 		}
 	}
 }
+
+SerialPort::SerialPort(){memset(this, 0, sizeof(SerialPort));}
 
 SerialPort::~SerialPort()
 {

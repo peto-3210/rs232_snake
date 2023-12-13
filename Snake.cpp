@@ -11,16 +11,30 @@ union position{
 
 
 GameBoard::GameBoard(char* conn){
+    this->running = false;
     this->Serial = SerialPort(conn);
-    this->head = singleBlock(MAX_X/2, MAX_Y/2, 'O', DEFAULT_CHAR_ATTRIB);
-    this->sendSerial(this->head);
+    if (this->Serial.connected == false){
+        return;
+    }
+
+    if (this->drawBorder() == false){
+        return;
+    }
+
+    this->head = singleBlock(MAX_X/2, MAX_Y/2, '5', DEFAULT_CHAR_ATTRIB);
+    if (this->sendSerial(this->head) == false){
+        return;
+    }
 
     singleBlock newBlock(MAX_X/2 - 1, MAX_Y/2 - 2, '6', DEFAULT_CHAR_ATTRIB);
     this->snakeBody.push_front(newBlock);
-    this->sendSerial(newBlock);
+    if (this->sendSerial(newBlock)){
+        return;
+    }
 
     this->lastDir = right;
     this->currentDir = right;
+    this->running = true;
 }
 
 GameBoard::~GameBoard(){
@@ -38,8 +52,9 @@ bool GameBoard::sendSerial(uint32_t* buffer, int size){
     bool ret_val = true;
     for (int i = 0; i < size; ++i){
         if (responseBuf[i] & UINT8_MAX != RESP_ACK){
-            responsePacket p(responseBuf[i]);
-            std::cerr << "Invalid response: \"" << p.response << "\" for request: " << (char*)p.command << std::endl;
+            serialPacket req(buffer[i]);
+            responsePacket res(responseBuf[i]);
+            std::cerr << "Invalid response: \"" << res.packet_to_string() << "\" for request: \"" << req.packet_to_string() << "\"!\n";
             ret_val = false;
         }
     }
@@ -202,12 +217,12 @@ bool GameBoard::detectCollision(){
     return false;
 }
 
-//Moves head of snake
-int GameBoard::moveHead(){
+//Moves head of snake, returns false in case of transmission error, ends game in case of collision
+bool GameBoard::moveHead(){
 
     //Adds block to the position of head
     if (this->addBlock() == false){
-        return -2;
+        return false;
     }
 
     //moves head
@@ -224,20 +239,20 @@ int GameBoard::moveHead(){
 
     //Draws new head block
     if (this->sendSerial(this->head) == false){
-        return -2;
+        return false;
     }
 
     //If no treat was eaten, removes last block
     if (this->detectTreat() == false && this->deleteBlock() == false){
-        return -2;
+        return false;
     }
 
     //If collicion occurs, terminates game
    if (this->detectCollision() == true){
-        return -1;
+        this->running = false;
    }
 
-   return 0; 
+   return false; 
 }
 
 

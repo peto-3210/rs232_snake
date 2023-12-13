@@ -49,5 +49,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/Serial.dir/DependInfo.cmake"
+  "CMakeFiles/SerialSnake.dir/DependInfo.cmake"
   )

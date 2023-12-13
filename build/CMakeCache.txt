@@ -156,7 +156,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=Serial
+CMAKE_PROJECT_NAME:STATIC=SerialSnake
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=C:/msys64/mingw64/bin/ranlib.exe
@@ -240,6 +240,15 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 // during the make.  This is useful for debugging only. With Visual
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
+
+//Value Computed by CMake
+SerialSnake_BINARY_DIR:STATIC=D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake/build
+
+//Value Computed by CMake
+SerialSnake_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+SerialSnake_SOURCE_DIR:STATIC=D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake
 
 //Value Computed by CMake
 Serial_BINARY_DIR:STATIC=D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake/build
