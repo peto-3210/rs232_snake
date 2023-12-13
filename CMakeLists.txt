@@ -7,4 +7,6 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_executable(SerialSnake SerialPort.cpp Snake.cpp Game.cpp)
 
-target_link_libraries(SerialSnake ncursesw)
+if (MINGW OR NOT WIN32)
+    target_link_libraries(SerialSnake ncursesw)
+endif()

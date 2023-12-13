@@ -6,14 +6,15 @@
 
 //Misc
 #define MY_CRC (uint8_t)'l'
-#define COMMAND_SIZE 4
+//#define COMMAND_SIZE 4
 #define PACKET_DATATYPE uint32_t
+#define MAX_BUF_SIZE 4096
 
 //Commands
-#define WRITE_CHAR (uint8_t)'C'
-#define SET_POS (uint8_t)'P'
-#define SET_CURSOR (uint8_t)'S'
-#define ERASE_SCR (uint8_t)'E'
+#define WRITE_CHAR (uint8_t)'c'
+#define SET_POS (uint8_t)'p'
+#define SET_CURSOR (uint8_t)'s'
+#define ERASE_SCR (uint8_t)'e'
 
 //Attributes
 #define ATTRIB_COLOR_BACK_R 0b00000001
@@ -184,7 +185,7 @@ enum direction{up, down, right, left};
 class GameBoard{
     public:
         //Board
-        GameBoard(char* conn);
+        GameBoard(SerialPort& s);
         ~GameBoard();
         bool isRunning(){return this->running;};
 

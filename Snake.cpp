@@ -10,9 +10,10 @@ union position{
 };
 
 
-GameBoard::GameBoard(char* conn){
+GameBoard::GameBoard(SerialPort& s){
     this->running = false;
-    this->Serial = SerialPort(conn);
+    this->Serial = s;
+    //this->Serial.writeSerialPort("e\0\0l", 4);
     if (this->Serial.connected == false){
         return;
     }
@@ -26,9 +27,9 @@ GameBoard::GameBoard(char* conn){
         return;
     }
 
-    singleBlock newBlock(MAX_X/2 - 1, MAX_Y/2 - 2, '6', DEFAULT_CHAR_ATTRIB);
+    singleBlock newBlock(MAX_X/2 - 1, MAX_Y/2, '6', DEFAULT_CHAR_ATTRIB);
     this->snakeBody.push_front(newBlock);
-    if (this->sendSerial(newBlock)){
+    if (this->sendSerial(newBlock) == false){
         return;
     }
 
@@ -46,12 +47,12 @@ GameBoard::~GameBoard(){
 
 //Used for all rs232 communication, returns false if transmission fails, true otherwise
 bool GameBoard::sendSerial(uint32_t* buffer, int size){
-    uint16_t responseBuf[size] = {0};
+    uint16_t responseBuf[size];
     this->Serial.writeSerialPort((char*)buffer, sizeof(uint32_t) * size);
-    this->Serial.readSerialPort((char*)buffer, size);
+    this->Serial.readSerialPort((char*)responseBuf, sizeof(uint16_t) * size);
     bool ret_val = true;
     for (int i = 0; i < size; ++i){
-        if (responseBuf[i] & UINT8_MAX != RESP_ACK){
+        if ((responseBuf[i] & UINT8_MAX) != RESP_ACK){
             serialPacket req(buffer[i]);
             responsePacket res(responseBuf[i]);
             std::cerr << "Invalid response: \"" << res.packet_to_string() << "\" for request: \"" << req.packet_to_string() << "\"!\n";
@@ -85,21 +86,21 @@ bool GameBoard::drawBorder(){
     }
 
     int drawnPixels = 2 * (MAX_X + 1) + 2 * (MAX_Y + 1);
-    uint64_t buffer[COMMAND_SIZE * drawnPixels];
+    uint64_t buffer[2 * (MAX_X + 1) + 2 * (MAX_Y + 1)];
     int iterator = 0;
     
     const uint8_t default_char = ' ';
 
     for (int i = MIN_X - 1; i <= MAX_X + 1; ++i){
-        buffer[iterator++] = this->writeCharacterToPosition(i, 0, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
-        buffer[iterator++] = this->writeCharacterToPosition(i, MAX_Y + 1, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        buffer[iterator++] = this->writeCharacterToPosition(i, MIN_Y - 1, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        buffer[iterator++] = this->writeCharacterToPosition(i, MAX_Y + 1, default_char, (i % 2 == 0) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
     }
     for (int i = MIN_Y; i <= MAX_Y; ++i){
-        buffer[iterator++] = this->writeCharacterToPosition(MIN_X, i, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
-        buffer[iterator++] = this->writeCharacterToPosition(MAX_X, i, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        buffer[iterator++] = this->writeCharacterToPosition(MIN_X - 1, i, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        buffer[iterator++] = this->writeCharacterToPosition(MAX_X + 1, i, default_char, (i % 2 == 0) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
     }
 
-    return this->sendSerial((uint32_t*)buffer, iterator * COMMAND_SIZE * 2);
+    return this->sendSerial((uint32_t*)buffer, iterator * 2);
 }
 
 
@@ -171,7 +172,9 @@ bool GameBoard::deleteBlock(){
 
 //Generates new treat at random position and renders it onto screen, returns false if transmission fails
 bool GameBoard::generateTreat(){
-    srand(time(NULL));
+    SYSTEMTIME st1;
+    GetSystemTime(&st1);
+    srand(st1.wMilliseconds);
     position pos;
     
     do {
@@ -192,7 +195,7 @@ bool GameBoard::generateTreat(){
 //Detects eating of treat and removes it from screen, no packet is sent because treat gets overwriten by head block
 bool GameBoard::detectTreat(){
     if (this->treats.find(this->head.posHash) != this->treats.end()){
-        this->treats.extract(this->head.posHash);
+        this->treats.erase(this->head.posHash);
         return true;
     }
     return false;
