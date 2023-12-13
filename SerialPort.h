@@ -30,6 +30,7 @@ public:
 	DWORD errors;
 
 	SerialPort(char *portName);
+	SerialPort();
 	~SerialPort();
 
 	int getTxNum() {ClearCommError(this->handler, &this->errors, &this->status); return this->status.cbOutQue;}
