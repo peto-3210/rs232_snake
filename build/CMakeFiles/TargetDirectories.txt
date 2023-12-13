@@ -1,3 +1,0 @@
-D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake/build/CMakeFiles/SerialSnake.dir
-D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake/build/CMakeFiles/edit_cache.dir
-D:/My_files/vut/3. sem/bpc-spc/rs232/rs232_snake/build/CMakeFiles/rebuild_cache.dir
