@@ -13,10 +13,14 @@
 #define MAX_DATA_LENGTH 255
 #define DATA_MASK 0x0001
 
+#if defined(_WIN32)
 #include <windows.h>
+#include <fileapi.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <fileapi.h>
+
 #include <stdint.h>
 #include <iostream>
 
