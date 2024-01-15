@@ -22,18 +22,6 @@
 #define restore_console() clrscr()
 #define set_position(x, y) gotoxy((x), (y))
 #define print_char(x) putch(x)
-
-#elif defined(__linux__)
-#include <unistd.h>
-#include <ncurses.h>
-#define sleep_s(x) sleep(x)
-#define sleep_ms(x) usleep((x) * 1000)
-#define is_key_pressed() (getch() != -1)
-#define read_input() getch()
-#define init_console() initscr(); nodelay(stdscr, TRUE)
-#define restore_console() endwin()
-#define set_position(x, y) move((y), (x))
-#define print_char(x) addch(x)
 #endif
 
 
