@@ -9,41 +9,45 @@ union position{
     uint16_t posHash;
 };
 
-
-GameBoard::GameBoard(SerialPort& s){
+//Initiates connection and board
+//Step time in miliseconds
+GameBoard::GameBoard(SerialPort& s, int step_time){
     running = false;
     Serial = s;
     //this->Serial.writeSerialPort("e\0\0l", 4);
     if (this->Serial.connected == false){
         return;
     }
+    stepTime = step_time;
 
-    if (drawBorder() == false){
+    if (drawBorder() == false || InitSnake() == false){
         return;
     }
-
-    head = singleBlock(MAX_X/2, MAX_Y/2, '5', DEFAULT_CHAR_ATTRIB);
-    if (sendSerial(head) == false){
-        return;
-    }
-
-    singleBlock newBlock(MAX_X/2 - 1, MAX_Y/2, '6', DEFAULT_CHAR_ATTRIB);
-    snakeBody.push_front(newBlock);
-    if (sendSerial(newBlock) == false){
-        return;
-    }
-
-    lastDir = right;
-    currentDir = right;
-    running = true;
 }
 
 GameBoard::~GameBoard(){
     Serial.closeSerial();
 }
 
+//Draws first blocks of snake
+bool GameBoard::InitSnake(){
+    head = singleBlock(CENTER_X, CENTER_Y, '5', DEFAULT_CHAR_ATTRIB);
+    if (writeBlock(head) == false){
+        return false;
+    }
 
+    singleBlock newBlock(CENTER_X - 1, CENTER_Y, '6', DEFAULT_CHAR_ATTRIB);
+    snakeBody.push_front(newBlock);
+    if (writeBlock(newBlock) == false){
+        return false;
+    }
 
+    lastDir = right;
+    currentDir = right;
+    running = true;
+    score = 0;
+    return true;
+}
 
 //Used for all rs232 communication, returns false if transmission fails, true otherwise
 bool GameBoard::sendSerial(uint32_t* buffer, int size){
@@ -66,22 +70,32 @@ bool GameBoard::sendSerial(serialPacket& packet){
     return sendSerial(&packet.rawPacket, 1);
 }
 
-bool GameBoard::sendSerial(writePosPacket& drawPacket){
+bool GameBoard::writePosChar(writePosPacket& drawPacket){
+    print_char_pos(drawPacket.x, drawPacket.y, drawPacket.character);
     return sendSerial((uint32_t*)&drawPacket.rawPacket, 2);
 }
 
-bool GameBoard::sendSerial(singleBlock& block){
-    writePosPacket newPacket = writeCharacterToPosition(block);
-    return sendSerial(newPacket);
+bool GameBoard::writeBlock(singleBlock& block){
+    writePosPacket newPacket = writePosCharPacket(block);
+    return writePosChar(newPacket);
 }
 
-
+//Writes text from the position, returns false if transmission fails
+bool GameBoard::writeText(std::string str, uint8_t x, uint8_t y){
+    uint64_t buffer[str.length()];
+    int iterator = 0;
+    for (char c : str){
+        buffer[iterator++] = writePosCharPacket(x + iterator, y, c, DEFAULT_CHAR_ATTRIB).rawPacket;
+    }
+    return sendSerial((uint32_t*)buffer, iterator * 2);
+}
 
 
 //Draws gameboard border, returns false if transmission fails
 bool GameBoard::drawBorder(){
     serialPacket eraseScr = getEraseScreenPacket();
-    if (sendSerial(eraseScr) == false){
+    serialPacket dummyChar = getWriteCharPacket(' ', ATTRIB_BLACK);
+    if (sendSerial(dummyChar) == false || sendSerial(eraseScr) == false){
         return false;
     }
 
@@ -89,15 +103,19 @@ bool GameBoard::drawBorder(){
     uint64_t buffer[2 * (MAX_X + 1) + 2 * (MAX_Y + 1)];
     int iterator = 0;
     
-    const uint8_t default_char = ' ';
+    const uint8_t default_char = '#';
 
     for (int i = MIN_X - 1; i <= MAX_X + 1; ++i){
-        buffer[iterator++] = writeCharacterToPosition(i, MIN_Y - 1, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
-        buffer[iterator++] = writeCharacterToPosition(i, MAX_Y + 1, default_char, (i % 2 == 0) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        buffer[iterator++] = writePosCharPacket(i, MIN_Y - 1, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        print_char_pos(i, MIN_Y - 1, default_char);
+        buffer[iterator++] = writePosCharPacket(i, MAX_Y + 1, default_char, (i % 2 == 0) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        print_char_pos(i, MAX_Y + 1, default_char);
     }
     for (int i = MIN_Y; i <= MAX_Y; ++i){
-        buffer[iterator++] = writeCharacterToPosition(MIN_X - 1, i, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
-        buffer[iterator++] = writeCharacterToPosition(MAX_X + 1, i, default_char, (i % 2 == 0) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        print_char_pos(MIN_X - 1, i, default_char);
+        buffer[iterator++] = writePosCharPacket(MIN_X - 1, i, default_char, (i % 2 == 1) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
+        print_char_pos(MAX_X + 1, i, default_char);
+        buffer[iterator++] = writePosCharPacket(MAX_X + 1, i, default_char, (i % 2 == 0) ? ATTRIB_WHITE : ATTRIB_BLACK).rawPacket;
     }
 
     return sendSerial((uint32_t*)buffer, iterator * 2);
@@ -119,15 +137,23 @@ uint8_t GameBoard::selectChar(){
     }
 
     else if (currentDir == up){
-        return (lastDir == left) ? '7' : '9';
+        return (lastDir == left) ? '1' : '3';
+    }
+
+    else if (currentDir == down) {
+        return (lastDir == left) ? '3' : '9';
+    }
+
+    else if (currentDir == left){
+        return (lastDir == up) ? '9' : '7';
     }
 
     else {
-        return (lastDir == left) ? '1' : '3';
+        return (lastDir == up) ? '7' : '1';
     }
 }
 
-//Sets direction of movement according to input from keyboard
+//Sets direction of movement according to input from keyboard, returns true if input is valid
 bool GameBoard::setMoveDir(uint8_t dir){
     direction newDir = right;
     switch(dir){
@@ -141,6 +167,12 @@ bool GameBoard::setMoveDir(uint8_t dir){
             break;
         default:    return false;
     }
+
+    //No turning from right to left
+    if (currentDir != newDir && currentDir % 2 == newDir % 2){
+        return false;
+    }
+
     lastDir = currentDir;
     currentDir = newDir;
     return true;
@@ -152,15 +184,16 @@ bool GameBoard::setMoveDir(uint8_t dir){
 //Draws new block to the current position of head and pushes it to the back of queue, returns false if transmission fails
 bool GameBoard::addBlock(){
     singleBlock newBlock(head.x, head.y, selectChar(), DEFAULT_CHAR_ATTRIB);
+    lastDir = currentDir;
     snakeBody.push_back(newBlock);
-    return sendSerial(newBlock);
+    return writeBlock(newBlock);
 }
 
 //Removes block from queue and deletes it from screen, returns false if transmission fails
 bool GameBoard::deleteBlock(){
     singleBlock p = snakeBody.front();
-    writePosPacket eraseChar = eraseCharacterAtPosition(p.x, p.y);
-    bool ret_val = sendSerial(eraseChar);
+    writePosPacket eraseChar = erasePosPacket(p.x, p.y);
+    bool ret_val = writePosChar(eraseChar);
 
     snakeBody.pop_front();
     return ret_val;
@@ -178,24 +211,30 @@ bool GameBoard::generateTreat(){
     position pos;
     
     do {
-        pos.posHash = rand() % UINT16_MAX;
-    } while(pos.x < MIN_X || pos.x > MAX_X || pos.y < MIN_Y || pos.y > MAX_Y ||
-        treats.find(pos.posHash) != treats.end());
+        pos.x = (rand() % MAX_X);
+        pos.y = (rand() % MAX_Y);
+    } while(pos.x < MIN_X || pos.y < MIN_Y || treats.find(pos.posHash) != treats.end());
     
     uint8_t treat;
-    do {
-        treat = rand() % UINT8_MAX;
-    } while(!isprint(treat));
+    treat = (rand() % 127);
+    //If reat is non-printable char
+    if (!isprint(treat)){
+        treat += 32;
+    }
+    
 
     treats.insert(pos.posHash);
-    writePosPacket newPack = writeCharacterToPosition(pos.x, pos.y, treat, DEFAULT_CHAR_ATTRIB);
-    return sendSerial(newPack);
+    writePosPacket newPack = writePosCharPacket(pos.x, pos.y, treat, DEFAULT_CHAR_ATTRIB);
+    return writePosChar(newPack);
 }
 
 //Detects eating of treat and removes it from screen, no packet is sent because treat gets overwriten by head block
+//Also increments score and calculates new step time
 bool GameBoard::detectTreat(){
     if (treats.find(head.posHash) != treats.end()){
         treats.erase(head.posHash);
+        ++score;
+        stepTime = (int) stepTime / STEP_COEFICIENT;
         return true;
     }
     return false;
@@ -230,9 +269,9 @@ bool GameBoard::moveHead(){
 
     //moves head
     switch(currentDir){
-        case up:    ++head.y;
+        case up:    --head.y;
             break;
-        case down:  --head.y;
+        case down:  ++head.y;
             break;
         case right: ++head.x;
             break;
@@ -241,13 +280,15 @@ bool GameBoard::moveHead(){
     }
 
     //Draws new head block
-    if (sendSerial(head) == false){
+    if (writeBlock(head) == false){
         return false;
     }
 
     //If no treat was eaten, removes last block
-    if (detectTreat() == false && deleteBlock() == false){
-        return false;
+    if (detectTreat() == false){
+        if (deleteBlock() == false){
+            return false;
+        }
     }
 
     //If collicion occurs, terminates game
@@ -255,7 +296,7 @@ bool GameBoard::moveHead(){
         running = false;
    }
 
-   return false; 
+   return true; 
 }
 
 
