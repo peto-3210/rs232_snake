@@ -1,46 +1,74 @@
 #include "Snake.hpp"
 
 //times in seconds
-#define STEP_TIME 1
-#define TREAT_TIME 5
-char* address = "\\\\.\\COM5";
+//Default step time (miliseconds)
+#define INIT_STEP_TIME 1000
+//How often the treat is spawned (in steps)
+#define TREAT_TIME 20
+char* address = "\\\\.\\COM3";
 
-#if defined(__MINGW32__) || defined(__MINGW64__)
-#include <unistd.h>
-#include <ncurses/ncurses.h>
-#define readInput() getch()
-#define initBoard() initscr();timeout(STEP_TIME)
+bool iskeypressed( unsigned timeout_ms = 0 )
+  {
+  return WaitForSingleObject(
+    GetStdHandle( STD_INPUT_HANDLE ),
+    timeout_ms
+    ) == WAIT_OBJECT_0;
+  }
 
-#elif defined(_WIN32)
-#include <conio.h>
-#define readInput() _getch()
-#define initBoard()
-
-#elif defined(__linux__)
-#include <unistd.h>
-#include <ncurses.h>
-#define readInput() getch()
-#define initBoard() initscr();timeout(STEP_TIME)
-#endif
-
-
+int get_difference_ms(SYSTEMTIME &s1, SYSTEMTIME &s2);
 int main(){
-    SerialPort s1(address);
-    GameBoard b1(s1);
+    //init_console();
 
+    SerialPort s1(address);
+    GameBoard b1(s1, INIT_STEP_TIME);
     if (b1.isRunning() == false){
         return 1;
     }
-    initBoard();
+
+    SYSTEMTIME reference;
+    SYSTEMTIME current_time;
+    GetSystemTime(&reference);
+    int treat_counter = 0;
 
     while(b1.isRunning()){
-        for(int i = 0; i < TREAT_TIME; ++i){
-            b1.setMoveDir(readInput());
-            if (b1.moveHead() == false){
+        //Getting input
+        do {
+            if (is_key_pressed())
+                if (b1.setMoveDir(read_input())){       //read_input()
+                    break;
+                }
+            //break;
+            sleep_ms(1);
+            GetSystemTime(&current_time);
+            int i = b1.getStepTime();
+        } while (get_difference_ms(reference, current_time) < b1.getStepTime());
+
+        //Moving 1 block
+        if (b1.moveHead() == false){
+            return 1;
+        }
+        GetSystemTime(&reference);
+        ++treat_counter;
+
+        //Adding treat
+        if (treat_counter == TREAT_TIME){
+            if (b1.generateTreat() == false){
                 return 1;
             }
-            sleep(STEP_TIME);
+            treat_counter = 0;
         }
+
     }
+    //restore_console();
+    b1.drawBorder();
+    std::string msg = "Game over! Score: " + std::to_string(b1.getScore());
+    std::cout << msg + "\n";
+    b1.writeText(msg, CENTER_X - msg.length() / 2, CENTER_Y);
+    int c = getchar();
     return 0;
+}
+
+int get_difference_ms(SYSTEMTIME &reference, SYSTEMTIME &current_time){
+    return (current_time.wMinute * 60000 + current_time.wSecond * 1000 + current_time.wMilliseconds) - 
+    (reference.wMinute * 60000 + reference.wSecond * 1000 + reference.wMilliseconds);
 }

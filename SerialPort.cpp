@@ -82,7 +82,7 @@ int SerialPort::readSerialPort(char *buffer, unsigned int buf_size)
 {
 	DWORD bytesRead=0;
 
-	int ready_bytes = 0;
+	unsigned int ready_bytes = 0;
 	DWORD ret_mask = 0;
 	do{
 

@@ -1,14 +1,47 @@
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#include <unistd.h>
+#include <ncurses\ncurses.h>
+#define sleep_s(x) sleep(x)
+#define sleep_ms(x) usleep((x) * 1000)
+#define is_key_pressed() (getch() != -1)
+#define read_input() getch()
+#define init_console() initscr(); nodelay(stdscr, TRUE)
+#define restore_console() endwin()
+#define set_position(x, y) move((y), (x))
+#define print_char(x) addch(x)
+
+#elif defined(_WIN32) 
+#include <conio.h>
+#include <Windows.h>
+#define sleep_s(x) Sleep((x) * 1000)
+#define sleep_ms(x) Sleep((x))
+#define is_key_pressed() _kbhit()
+#define read_input() _getch_nolock()
+#define init_console() clrscr()
+#define restore_console() clrscr()
+#define set_position(x, y) gotoxy((x), (y))
+#define print_char(x) putch(x)
+#endif
+
+
 //Corners of game board
 #define MIN_X 1
 #define MAX_X 78
 #define MIN_Y 1
 #define MAX_Y 38
+#define CENTER_X 39
+#define CENTER_Y 19
+
+//Game settings
+#define STEP_COEFICIENT 1.05
+
+//For console
+#define set_default_pos() set_position(0, MAX_Y + 2)
+#define print_char_pos(x, y, c) set_position((x),(y)); print_char(c); set_position(0, MAX_Y + 2); read_input()
 
 //Misc
 #define MY_CRC (uint8_t)'l'
-//#define COMMAND_SIZE 4
-#define PACKET_DATATYPE uint32_t
-#define MAX_BUF_SIZE 4096
 
 //Commands
 #define WRITE_CHAR (uint8_t)'c'
@@ -35,6 +68,15 @@
 #define ATTRIB_WHITE 0b00000111
 #define DEFAULT_CHAR_ATTRIB  (ATTRIB_COLOR_BACK_B | ATTRIB_CHAR_COLOR_TEXT_R)
 #define DEFAULT_CURS_PROP (ATTRIB_COLOR_BACK_G | ATTRIB_CURS_ON)
+
+//snake body symbols
+#define HORIZONTAL 255-37
+#define VERTICAL 255-42
+#define TOP_LEFT_CORNER 255-41
+#define TOP_RIGHT_CORNER 255-35
+#define BOT_LEFT_CORNER 255-44
+#define BOT_RIGHT_CORNER 255-38
+#define HEAD_CHARACTER 'O'
 
 //Response
 #define RESP_ACK (uint8_t)'A'
@@ -181,14 +223,17 @@ struct singleBlock{
     };
 };
 
-enum direction{up, down, right, left};
+enum direction{up, left, down, right};
 
 class GameBoard{
     public:
         //Board
-        GameBoard(SerialPort& s);
+        GameBoard(SerialPort& s, int step_time);
         ~GameBoard();
-        bool isRunning(){return this->running;};
+        bool drawBorder();
+        bool writeText(std::string str, uint8_t x, uint8_t y);
+        bool isRunning(){return running;};
+        int getStepTime(){return stepTime;};
 
         //Snake
         bool setMoveDir(uint8_t dir);
@@ -196,24 +241,26 @@ class GameBoard{
 
         //Treats
         bool generateTreat();
+        int getScore(){return score;};
 
     private:
         //Board
         SerialPort Serial;
         bool running;
+        int stepTime;
 
-        bool sendSerial(serialPacket& packet);
-        bool sendSerial(writePosPacket& drawPacket);
         bool sendSerial(uint32_t* buffer, int size);
-        bool sendSerial(singleBlock& block);
-        bool drawBorder();
-
+        bool sendSerial(serialPacket& packet);
+        bool writePosChar(writePosPacket& drawPacket);
+        bool writeBlock(singleBlock& block);
+        
         //Snake
         singleBlock head;
         std::deque<singleBlock> snakeBody;
         direction lastDir;
         direction currentDir;
 
+        bool InitSnake();
         uint8_t selectChar();
         bool addBlock();
         bool deleteBlock();
@@ -221,14 +268,14 @@ class GameBoard{
         
         //Treats
         std::unordered_set<uint16_t> treats;
-
+        int score;
         bool detectTreat();
 
         static serialPacket getEraseScreenPacket(){return serialPacket(ERASE_SCR, 0, 0);}
         static serialPacket getSetCursorPacket(uint8_t properties){return serialPacket(SET_CURSOR, properties, 0);}
         static serialPacket getSetPositionPacket(uint8_t x, uint8_t y){return serialPacket(SET_POS, x, y);}
         static serialPacket getWriteCharPacket(char c, uint8_t attribute){return serialPacket(WRITE_CHAR, c, attribute);}
-        static writePosPacket writeCharacterToPosition(uint8_t x, uint8_t y, char c, uint8_t attrib){return writePosPacket(x, y, c, attrib);}
-        static writePosPacket writeCharacterToPosition(singleBlock& block){return writePosPacket(block.x, block.y, block.character, block.attribute);}
-        static writePosPacket eraseCharacterAtPosition(uint8_t x, uint8_t y){return writePosPacket(x, y, ' ', ATTRIB_WHITE);}
+        static writePosPacket writePosCharPacket(uint8_t x, uint8_t y, char c, uint8_t attrib){return writePosPacket(x, y, c, attrib);}
+        static writePosPacket writePosCharPacket(singleBlock& block){return writePosPacket(block.x, block.y, block.character, block.attribute);}
+        static writePosPacket erasePosPacket(uint8_t x, uint8_t y){return writePosPacket(x, y, ' ', ATTRIB_BLACK);}
 };
